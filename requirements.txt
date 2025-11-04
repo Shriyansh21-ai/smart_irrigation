@@ -1,0 +1,15 @@
+flask
+pandas
+numpy
+xgboost
+scikit-learn
+pyserial
+plotly
+transformers
+torch
+sentencepiece
+# sensor libs (install only when using real sensors)
+adafruit-circuitpython-sht31d
+adafruit-circuitpython-ads1x15
+w1thermsensor
+bh1750

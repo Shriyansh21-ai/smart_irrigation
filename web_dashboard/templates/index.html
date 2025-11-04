@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Smart Irrigation Dashboard</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fb; }
+      h1 { text-align: center; }
+      .graph { max-width: 900px; margin: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>🌾 Smart Irrigation Dashboard</h1>
+    <div class="graph">
+      {{ graph_html | safe }}
+    </div>
+  </body>
+</html>

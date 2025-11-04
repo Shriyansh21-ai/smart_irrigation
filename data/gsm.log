@@ -1,0 +1,34 @@
+2025-11-03 23:18:54,366 - WARNING - xgboost is not available; skipping model load and using rule-based fallback.
+2025-11-03 23:18:54,366 - INFO - Starting main loop
+2025-11-03 23:18:54,366 - INFO - Read sensors: {'soil_temp': 27.7, 'air_temp': 31.58, 'soil_moisture': 68.44, 'humidity': 68.04, 'light': 459.25}
+2025-11-03 23:18:54,367 - ERROR - Unexpected error in main loop: 'timestamp'
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 135, in main_loop
+    msg = f"[{raw['timestamp']}] INFO: No irrigation needed. Soil moisture={raw['soil_moisture']}"
+              ~~~^^^^^^^^^^^^^
+KeyError: 'timestamp'
+2025-11-03 23:19:54,372 - INFO - Read sensors: {'soil_temp': 23.6, 'air_temp': 37.03, 'soil_moisture': 47.56, 'humidity': 79.9, 'light': 809.35}
+2025-11-03 23:19:54,373 - ERROR - Unexpected error in main loop: 'timestamp'
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 135, in main_loop
+    msg = f"[{raw['timestamp']}] INFO: No irrigation needed. Soil moisture={raw['soil_moisture']}"
+              ~~~^^^^^^^^^^^^^
+KeyError: 'timestamp'
+2025-11-03 23:20:54,375 - INFO - Read sensors: {'soil_temp': 34.04, 'air_temp': 24.66, 'soil_moisture': 44.55, 'humidity': 42.63, 'light': 299.1}
+2025-11-03 23:20:54,375 - ERROR - Unexpected error in main loop: 'timestamp'
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 135, in main_loop
+    msg = f"[{raw['timestamp']}] INFO: No irrigation needed. Soil moisture={raw['soil_moisture']}"
+              ~~~^^^^^^^^^^^^^
+KeyError: 'timestamp'
+2025-11-03 23:21:38,876 - WARNING - xgboost is not available; skipping model load and using rule-based fallback.
+2025-11-03 23:21:38,877 - INFO - Starting main loop
+2025-11-03 23:21:38,877 - INFO - Read sensors: {'timestamp': '2025-11-03 23:21:38', 'soil_temp': 32.91, 'air_temp': 38.28, 'soil_moisture': 28.7, 'humidity': 44.33, 'light': 925.92}
+2025-11-03 23:21:38,878 - WARNING - [2025-11-03 23:21:38] ALERT: Irrigation recommended. Soil moisture=28.7
+2025-11-03 23:21:38,878 - WARNING - PHONE_NUMBER not configured; skipping SMS alert. Message: [2025-11-03 23:21:38] ALERT: Irrigation recommended. Soil moisture=28.7
+2025-11-03 23:23:12,021 - INFO - User feedback saved: 1
+2025-11-03 23:24:12,021 - INFO - Read sensors: {'timestamp': '2025-11-03 23:24:12', 'soil_temp': 26.97, 'air_temp': 25.08, 'soil_moisture': 89.14, 'humidity': 88.29, 'light': 419.06}
+2025-11-03 23:24:12,022 - INFO - [2025-11-03 23:24:12] INFO: No irrigation needed. Soil moisture=89.14
+2025-11-03 23:24:31,689 - INFO - User feedback saved: 0
+2025-11-03 23:25:31,690 - INFO - Read sensors: {'timestamp': '2025-11-03 23:25:31', 'soil_temp': 34.13, 'air_temp': 38.44, 'soil_moisture': 68.25, 'humidity': 74.72, 'light': 414.81}
+2025-11-03 23:25:31,690 - INFO - [2025-11-03 23:25:31] INFO: No irrigation needed. Soil moisture=68.25
