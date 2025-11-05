@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Irrigation Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Smart Irrigation System</h1>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3>Sensor Data</h3>
+                <div id="sensor-data">
+                    <p>Loading data...</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Chatbot Assistant 🤖</h3>
+                <div id="chat-box"></div>
+                <input type="text" id="user-input" placeholder="Ask something..." />
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchSensorData() {
+            const res = await fetch('/get_sensor_data');
+            const data = await res.json();
+            document.getElementById('sensor-data').innerHTML = `
+                <p>🌡 Air Temp: ${data.air_temp.toFixed(1)} °C</p>
+                <p>🌿 Soil Temp: ${data.soil_temp.toFixed(1)} °C</p>
+                <p>💧 Moisture: ${data.soil_moisture.toFixed(1)} %</p>
+                <p>💨 Humidity: ${data.humidity.toFixed(1)} %</p>
+                <p>🔆 Light: ${data.light.toFixed(1)} lux</p>
+                <p>🚰 Irrigation: <b>${data.irrigation_status}</b></p>
+            `;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("user-input");
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML += `<p><b>You:</b> ${message}</p>`;
+
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message}),
+            });
+
+            const data = await res.json();
+            chatBox.innerHTML += `<p><b>Bot:</b> ${data.response}</p>`;
+            input.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        setInterval(fetchSensorData, 3000);
+        fetchSensorData();
+    </script>
+</body>
+</html>

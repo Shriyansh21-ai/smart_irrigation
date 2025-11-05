@@ -32,3 +32,28 @@ KeyError: 'timestamp'
 2025-11-03 23:24:31,689 - INFO - User feedback saved: 0
 2025-11-03 23:25:31,690 - INFO - Read sensors: {'timestamp': '2025-11-03 23:25:31', 'soil_temp': 34.13, 'air_temp': 38.44, 'soil_moisture': 68.25, 'humidity': 74.72, 'light': 414.81}
 2025-11-03 23:25:31,690 - INFO - [2025-11-03 23:25:31] INFO: No irrigation needed. Soil moisture=68.25
+2025-11-04 15:03:40,537 - ERROR - Failed to load model: [15:03:40] C:\actions-runner\_work\xgboost\xgboost\src\c_api\c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `models/irrigation_model.json`.
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 57, in <module>
+    model.load_model(MODEL_PATH)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\sklearn.py", line 1124, in load_model
+    self.get_booster().load_model(fname)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 3052, in load_model
+    _check_call(_LIB.XGBoosterLoadModel(self.handle, c_str(fname)))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 323, in _check_call
+    raise XGBoostError(py_str(_LIB.XGBGetLastError()))
+xgboost.core.XGBoostError: [15:03:40] C:\actions-runner\_work\xgboost\xgboost\src\c_api\c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `models/irrigation_model.json`.
+2025-11-04 15:03:40,544 - INFO - Starting main loop
+2025-11-04 15:03:40,544 - INFO - Read sensors: {'timestamp': '2025-11-04 15:03:40', 'soil_temp': 19.41, 'air_temp': 25.18, 'soil_moisture': 70.69, 'humidity': 83.78, 'light': 959.46}
+2025-11-04 15:03:40,544 - INFO - [2025-11-04 15:03:40] INFO: No irrigation needed. Soil moisture=70.69
+2025-11-04 15:06:25,016 - INFO - User feedback saved: 1
+2025-11-04 15:07:25,018 - INFO - Read sensors: {'timestamp': '2025-11-04 15:07:25', 'soil_temp': 20.59, 'air_temp': 25.78, 'soil_moisture': 26.42, 'humidity': 46.97, 'light': 485.33}
+2025-11-04 15:07:25,018 - WARNING - [2025-11-04 15:07:25] ALERT: Irrigation recommended. Soil moisture=26.42
+2025-11-04 15:07:25,018 - WARNING - PHONE_NUMBER not configured; skipping SMS alert. Message: [2025-11-04 15:07:25] ALERT: Irrigation recommended. Soil moisture=26.42
+2025-11-04 15:08:02,028 - INFO - User feedback saved: 1
+2025-11-04 15:09:02,029 - INFO - Read sensors: {'timestamp': '2025-11-04 15:09:02', 'soil_temp': 30.2, 'air_temp': 37.23, 'soil_moisture': 69.94, 'humidity': 44.6, 'light': 334.34}
+2025-11-04 15:09:02,029 - INFO - [2025-11-04 15:09:02] INFO: No irrigation needed. Soil moisture=69.94
+2025-11-04 15:43:02,387 - INFO - User feedback saved: 1
