@@ -1,0 +1,13 @@
+🌾 SMART IRRIGATION - XGBOOST TRAINING REPORT 🌾
+Date: 2025-11-06 19:05:40.654143
+Samples used: 1011
+Accuracy: 98.03%
+
+Feature Columns:
+- soil_temp
+- air_temp
+- soil_moisture
+- humidity
+- light
+- temp_diff
+- humidity_ratio

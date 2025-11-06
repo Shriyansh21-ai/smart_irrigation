@@ -57,3 +57,99 @@ xgboost.core.XGBoostError: [15:03:40] C:\actions-runner\_work\xgboost\xgboost\sr
 2025-11-04 15:09:02,029 - INFO - Read sensors: {'timestamp': '2025-11-04 15:09:02', 'soil_temp': 30.2, 'air_temp': 37.23, 'soil_moisture': 69.94, 'humidity': 44.6, 'light': 334.34}
 2025-11-04 15:09:02,029 - INFO - [2025-11-04 15:09:02] INFO: No irrigation needed. Soil moisture=69.94
 2025-11-04 15:43:02,387 - INFO - User feedback saved: 1
+2025-11-06 18:32:08,603 - ERROR - Failed to load model: [18:32:08] C:\actions-runner\_work\xgboost\xgboost\src\c_api\c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `models/irrigation_model.json`.
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 57, in <module>
+    model.load_model(MODEL_PATH)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\sklearn.py", line 1124, in load_model
+    self.get_booster().load_model(fname)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 3052, in load_model
+    _check_call(_LIB.XGBoosterLoadModel(self.handle, c_str(fname)))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 323, in _check_call
+    raise XGBoostError(py_str(_LIB.XGBGetLastError()))
+xgboost.core.XGBoostError: [18:32:08] C:\actions-runner\_work\xgboost\xgboost\src\c_api\c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `models/irrigation_model.json`.
+2025-11-06 18:32:08,608 - INFO - Starting main loop
+2025-11-06 18:32:08,608 - INFO - Read sensors: {'timestamp': '2025-11-06 18:32:08', 'soil_temp': 21.92, 'air_temp': 39.9, 'soil_moisture': 51.59, 'humidity': 73.44, 'light': 760.01}
+2025-11-06 18:32:08,609 - INFO - [2025-11-06 18:32:08] INFO: No irrigation needed. Soil moisture=51.59
+2025-11-06 19:07:00,032 - ERROR - Failed to load model: [19:07:00] C:\actions-runner\_work\xgboost\xgboost\src\c_api\c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `models/irrigation_model.json`.
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 57, in <module>
+    model.load_model(MODEL_PATH)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\sklearn.py", line 1124, in load_model
+    self.get_booster().load_model(fname)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 3052, in load_model
+    _check_call(_LIB.XGBoosterLoadModel(self.handle, c_str(fname)))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 323, in _check_call
+    raise XGBoostError(py_str(_LIB.XGBGetLastError()))
+xgboost.core.XGBoostError: [19:07:00] C:\actions-runner\_work\xgboost\xgboost\src\c_api\c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `models/irrigation_model.json`.
+2025-11-06 19:07:00,036 - INFO - Starting main loop
+2025-11-06 19:07:00,036 - INFO - Read sensors: {'timestamp': '2025-11-06 19:07:00', 'soil_temp': 27.77, 'air_temp': 25.73, 'soil_moisture': 32.97, 'humidity': 41.36, 'light': 262.48}
+2025-11-06 19:07:00,037 - INFO - [2025-11-06 19:07:00] INFO: No irrigation needed. Soil moisture=32.97
+2025-11-06 19:15:09,863 - ERROR - Failed to load model: 'utf-8' codec can't decode byte 0x80 in position 105: invalid start byte
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 57, in <module>
+    model.load_model(MODEL_PATH)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\sklearn.py", line 1124, in load_model
+    self.get_booster().load_model(fname)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 3052, in load_model
+    _check_call(_LIB.XGBoosterLoadModel(self.handle, c_str(fname)))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 323, in _check_call
+    raise XGBoostError(py_str(_LIB.XGBGetLastError()))
+                       ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\compat.py", line 24, in py_str
+    return x.decode("utf-8")  # type: ignore
+           ~~~~~~~~^^^^^^^^^
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0x80 in position 105: invalid start byte
+2025-11-06 19:15:09,868 - INFO - Starting main loop
+2025-11-06 19:15:09,868 - INFO - Read sensors: {'timestamp': '2025-11-06 19:15:09', 'soil_temp': 29.32, 'air_temp': 36.03, 'soil_moisture': 40.87, 'humidity': 47.91, 'light': 798.89}
+2025-11-06 19:15:09,868 - INFO - [2025-11-06 19:15:09] INFO: No irrigation needed. Soil moisture=40.87
+2025-11-06 19:15:09,869 - ERROR - Unexpected error in main loop: type object 'datetime.datetime' has no attribute 'UTC'
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 140, in main_loop
+    append_reading(raw, label='')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 77, in append_reading
+    row_dict.get('timestamp', datetime.now(datetime.UTC).isoformat()
+                                           ^^^^^^^^^^^^
+AttributeError: type object 'datetime.datetime' has no attribute 'UTC'
+2025-11-06 19:22:47,036 - INFO - Loaded model from models/irrigation_xgb_model.pkl
+2025-11-06 19:22:47,037 - INFO - Starting main loop
+2025-11-06 19:22:47,037 - INFO - Read sensors: {'timestamp': '2025-11-06 19:22:47', 'soil_temp': 34.06, 'air_temp': 29.32, 'soil_moisture': 79.63, 'humidity': 65.35, 'light': 647.47}
+2025-11-06 19:22:47,043 - ERROR - Model inference failed, falling back to rule. Error: Feature shape mismatch, expected: 7, got 5
+Traceback (most recent call last):
+  File "C:\Users\shriyansh dev\Desktop\smart_irrigation\main.py", line 111, in predict_decision
+    pred = model.predict(X)[0]
+           ~~~~~~~~~~~~~^^^
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 774, in inner_f
+    return func(**kwargs)
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\sklearn.py", line 1839, in predict
+    class_probs = super().predict(
+        X=X,
+    ...<3 lines>...
+        iteration_range=iteration_range,
+    )
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 774, in inner_f
+    return func(**kwargs)
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\sklearn.py", line 1443, in predict
+    predts = self.get_booster().inplace_predict(
+        data=X,
+    ...<4 lines>...
+        validate_features=validate_features,
+    )
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 774, in inner_f
+    return func(**kwargs)
+  File "C:\Users\shriyansh dev\AppData\Roaming\Python\Python313\site-packages\xgboost\core.py", line 2865, in inplace_predict
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: Feature shape mismatch, expected: 7, got 5
+2025-11-06 19:22:47,058 - INFO - [2025-11-06 19:22:47] INFO: No irrigation needed. Soil moisture=79.63

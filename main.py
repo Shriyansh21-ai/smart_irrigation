@@ -1,173 +1,114 @@
-#!/usr/bin/env python3
-"""
-Main control loop:
-- reads sensors
-- predicts irrigation_needed with model
-- rule-based fallback
-- triggers SMS alert (and can trigger relay via GPIO if implemented)
-- collects user feedback (adaptive learning) and appends to CSV
-"""
+import os
+import time
+import joblib
+import logging
+import pandas as pd
+from datetime import datetime, timezone
+from xgboost import XGBClassifier
 
-import time, os, csv, traceback
-# avoid pandas dependency; build feature vectors as plain lists for model.predict
-import importlib
-try:
-    xgb = importlib.import_module("xgboost")
-    XGBOOST_AVAILABLE = True
-except Exception:
-    xgb = None
-    XGBOOST_AVAILABLE = False
-from datetime import datetime
+# ---------------- Paths ----------------
+MODEL_JSON_PATH = "models/irrigation_model.json"
+MODEL_PKL_PATH = "models/irrigation_xgb_model.pkl"
+DATA_LOG_PATH = "data/realtime_sensor_log.csv"
 
-# local imports
-from sensors.sensor_reader import read_all_sensors
-from communication.gsm_module import send_sms
-from utils.logger import get_logger
+# ---------------- Logging Setup ----------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
-# Optional conversational assistant
-try:
-    from utils.chat_assistant import ChatAssistant
-    chat = ChatAssistant()  # may download model on first run
-    CHAT_AVAILABLE = True
-except Exception:
-    CHAT_AVAILABLE = False
+# ---------------- Sensor Mock Function ----------------
+def read_sensors():
+    """Mock sensor readings (replace with real sensor code later)."""
+    import random
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "soil_temp": round(random.uniform(15, 35), 2),
+        "air_temp": round(random.uniform(20, 40), 2),
+        "soil_moisture": round(random.uniform(10, 90), 2),
+        "humidity": round(random.uniform(30, 90), 2),
+        "light": round(random.uniform(200, 1000), 2),
+    }
 
-# Config
-MODEL_PATH = "models/irrigation_model.json"
-COLLECTED_CSV = "data/collected_data.csv"     # appended with feedback label
-TRAINING_CSV = "data/training_data.csv"       # historical training data (can be same file)
-LOG_FILE = "data/system.log"
-
-# runtime settings
-# PHONE_NUMBER can be provided via environment variable (e.g. +12345556789); if empty SMS will be skipped
-PHONE_NUMBER = os.getenv("PHONE_NUMBER", "")
-# sleep interval between loop iterations (seconds)
-SLEEP_SECONDS = int(os.getenv("SLEEP_SECONDS", "60"))
-
-# ensure data directory exists
-data_dir = os.path.dirname(COLLECTED_CSV) or "."
-os.makedirs(data_dir, exist_ok=True)
-
-# Load model
-logger = get_logger(LOG_FILE)
-model = None
-if os.path.exists(MODEL_PATH) and XGBOOST_AVAILABLE and xgb is not None:
-    try:
-        model = xgb.XGBClassifier()
-        model.load_model(MODEL_PATH)
-        logger.info("Loaded model from %s", MODEL_PATH)
-    except Exception as e:
-        logger.exception("Failed to load model: %s", e)
-        model = None
-else:
-    if not os.path.exists(MODEL_PATH):
-        logger.warning("Model not found at %s. Will use rule-based fallback.", MODEL_PATH)
+# ---------------- Model Loader ----------------
+def load_model():
+    if os.path.exists(MODEL_PKL_PATH):
+        logging.info(f"✅ Loading XGBoost model (PKL): {MODEL_PKL_PATH}")
+        model = joblib.load(MODEL_PKL_PATH)
+        return model
+    elif os.path.exists(MODEL_JSON_PATH):
+        logging.info(f"✅ Loading XGBoost model (JSON): {MODEL_JSON_PATH}")
+        model = XGBClassifier()
+        model.load_model(MODEL_JSON_PATH)
+        return model
     else:
-        logger.warning("xgboost is not available; skipping model load and using rule-based fallback.")
+        raise FileNotFoundError("❌ No model found in models/ directory.")
 
-# Helper: append reading + optional label to CSV
-def append_reading(row_dict, label=None, csv_path=COLLECTED_CSV):
-    header = ['timestamp','soil_moisture','soil_temp','air_temp','humidity','light','label']
-    exists = os.path.exists(csv_path)
-    with open(csv_path, 'a', newline='') as f:
-        writer = csv.writer(f)
-        if not exists:
-            writer.writerow(header)
-        row = [
-            row_dict.get('timestamp', datetime.utcnow().isoformat()),
-            row_dict['soil_moisture'],
-            row_dict['soil_temp'],
-            row_dict['air_temp'],
-            row_dict['humidity'],
-            row_dict['light'],
-            label if label is not None else ''
-        ]
-        writer.writerow(row)
+# ---------------- Feature Preparation ----------------
+def prepare_features(reading):
+    df = pd.DataFrame([reading])
+    df["temp_diff"] = df["air_temp"] - df["soil_temp"]
+    df["humidity_ratio"] = df["humidity"] / (df["soil_moisture"] + 1)
 
-# Simple rule-based fallback
-def rule_based_decision(data):
-    # VERY simple: change thresholds for your crop; these are example baseline values
-    soil_moisture = data['soil_moisture']
-    humidity = data['humidity']
-    # example rule: if soil moisture below 30 OR (moisture<40 and humidity<40)
-    if soil_moisture < 30 or (soil_moisture < 40 and humidity < 40):
-        return 1
-    return 0
+    # Reorder columns exactly as in training
+    cols = ["soil_temp", "air_temp", "soil_moisture", "humidity", "light", "temp_diff", "humidity_ratio"]
+    return df[cols]
 
-def predict_decision(data):
-    # Build feature vector as a plain list to avoid pandas dependency
-    X = [[
-        data['soil_moisture'],
-        data['soil_temp'],
-        data['air_temp'],
-        data['humidity'],
-        data['light']
-    ]]
-    try:
-        if model is not None:
-            pred = model.predict(X)[0]
-            logger.info("Model prediction: %s", pred)
-            return int(pred)
-    except Exception as e:
-        logger.exception("Model inference failed, falling back to rule. Error: %s", e)
-    return rule_based_decision(data)
+# ---------------- Prediction ----------------
+def predict_irrigation(model, reading):
+    df = prepare_features(reading)
+    pred = model.predict(df)
+    return int(pred[0])
 
+# ---------------- Append Sensor Data ----------------
+def append_reading(row_dict, label=''):
+    os.makedirs(os.path.dirname(DATA_LOG_PATH), exist_ok=True)
+    df = pd.DataFrame([{
+        "timestamp": row_dict.get('timestamp', datetime.now(timezone.utc).isoformat()),
+        "soil_temp": row_dict["soil_temp"],
+        "air_temp": row_dict["air_temp"],
+        "soil_moisture": row_dict["soil_moisture"],
+        "humidity": row_dict["humidity"],
+        "light": row_dict["light"],
+        "irrigation_needed": label
+    }])
+    header = not os.path.exists(DATA_LOG_PATH)
+    df.to_csv(DATA_LOG_PATH, mode='a', header=header, index=False)
+
+# ---------------- Main Loop ----------------
 def main_loop():
-    logger.info("Starting main loop")
+    try:
+        model = load_model()
+    except Exception as e:
+        logging.error(f"Failed to load model: {e}")
+        return
+
+    logging.info("Starting main loop")
     while True:
         try:
-            raw = read_all_sensors()
-            logger.info("Read sensors: %s", raw)
+            reading = read_sensors()
+            logging.info(f"Read sensors: {reading}")
 
-            decision = predict_decision(raw)
-            if decision == 1:
-                msg = f"[{raw['timestamp']}] ALERT: Irrigation recommended. Soil moisture={raw['soil_moisture']}"
-                logger.warning(msg)
-                # Send SMS (non-blocking approach recommended in production)
-                try:
-                    if PHONE_NUMBER:
-                        send_sms(PHONE_NUMBER, msg)
-                    else:
-                        logger.warning("PHONE_NUMBER not configured; skipping SMS alert. Message: %s", msg)
-                except Exception as e:
-                    logger.exception("Failed to send SMS: %s", e)
+            irrigation_needed = predict_irrigation(model, reading)
+            if irrigation_needed == 1:
+                logging.info(f"[{datetime.now().isoformat()}] 💧 Irrigation Needed! Soil moisture={reading['soil_moisture']}")
             else:
-                msg = f"[{raw['timestamp']}] INFO: No irrigation needed. Soil moisture={raw['soil_moisture']}"
-                logger.info(msg)
+                logging.info(f"[{datetime.now().isoformat()}] INFO: No irrigation needed. Soil moisture={reading['soil_moisture']}")
 
-            # Save reading (without label yet)
-            append_reading(raw, label='')
+            # Optional user feedback for supervised logging
+            user_input = input("Confirm irrigation needed? (y=needed / n=not / Enter=skip): ").strip().lower()
+            if user_input in ["y", "n"]:
+                label = 1 if user_input == "y" else 0
+                append_reading(reading, label)
 
-            # Ask for feedback (console) - this is simple; you can replace with mobile-confirmation later
-            # Automatic feedback: if you actuate pump, you can use flow sensor reading to auto-label
-            try:
-                # Non-blocking minimal prompt: user can press Enter to skip
-                feedback = input("Confirm irrigation needed? (y=needed / n=not / Enter=skip): ").strip().lower()
-                label = None
-                if feedback == 'y':
-                    label = 1
-                elif feedback == 'n':
-                    label = 0
-
-                if label is not None:
-                    append_reading(raw, label=label)   # append with label
-                    logger.info("User feedback saved: %s", label)
-            except Exception as e:
-                logger.debug("Feedback prompt skipped or failed: %s", e)
-
-            # Optional: Chat assistant usage example
-            if CHAT_AVAILABLE:
-                q = f"Why irrigation? Soil moist={raw['soil_moisture']}, temp={raw['soil_temp']}, humid={raw['humidity']}."
-                reply = chat.ask(q)
-                print("Assistant:", reply)
+            time.sleep(5)  # adjust interval as needed
 
         except KeyboardInterrupt:
-            logger.info("Shutting down by user")
+            logging.info("🛑 Stopped by user.")
             break
         except Exception as e:
-            logger.exception("Unexpected error in main loop: %s", e)
+            logging.error(f"Unexpected error in main loop: {e}")
 
-        time.sleep(SLEEP_SECONDS)
-
+# ---------------- Entry Point ----------------
 if __name__ == "__main__":
     main_loop()

@@ -1,4 +1,5 @@
 import serial, time
+from datetime import datetime
 from utils.logger import get_logger
 
 logger = get_logger("data/gsm.log")
@@ -29,3 +30,6 @@ def send_sms(phone_number, message, port=SERIAL_PORT):
     except Exception as e:
         logger.exception("Failed to send SMS: %s", e)
         raise
+def send_offline_alert(message):
+    with open("data/outbox/alerts.txt", "a") as f:
+        f.write(f"{datetime.now().isoformat()} - {message}\n")
