@@ -1,114 +1,118 @@
 import os
 import time
-import joblib
-import logging
 import pandas as pd
+import logging
 from datetime import datetime, timezone
 from xgboost import XGBClassifier
+import joblib
+import random
+from supabase import create_client, Client
 
-# ---------------- Paths ----------------
-MODEL_JSON_PATH = "models/irrigation_model.json"
-MODEL_PKL_PATH = "models/irrigation_xgb_model.pkl"
-DATA_LOG_PATH = "data/realtime_sensor_log.csv"
+# =============== CONFIG ===============
+MODEL_PATH = "models/irrigation_xgb_model.pkl"
 
-# ---------------- Logging Setup ----------------
+SUPABASE_URL = "https://ymryienhepwknzqpaket.supabase.co"  
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcnlpZW5oZXB3a256cXBha2V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0OTMyNzksImV4cCI6MjA3ODA2OTI3OX0.AG-NfY2RcENjCX1BjH7hqGFwYFzMOWbF2A899zFh_AU"  
+
+OFFLINE_BACKUP = "offline_backup.csv"
+UPLOAD_INTERVAL = 10  # seconds
+
+# =============== LOGGING ===============
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# ---------------- Sensor Mock Function ----------------
-def read_sensors():
-    """Mock sensor readings (replace with real sensor code later)."""
-    import random
+# =============== INIT SUPABASE ===============
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    logging.info("✅ Supabase client initialized successfully")
+except Exception as e:
+    supabase = None
+    logging.warning(f"⚠️ Could not initialize Supabase: {e}")
+
+# =============== LOAD MODEL ===============
+try:
+    model = joblib.load(MODEL_PATH)
+    logging.info("✅ XGBoost model loaded successfully")
+except Exception as e:
+    model = None
+    logging.error(f"❌ Failed to load model: {e}")
+
+# =============== MOCK SENSOR DATA ===============
+def read_sensor_data():
+    """Simulate live sensor data readings."""
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "soil_temp": round(random.uniform(15, 35), 2),
         "air_temp": round(random.uniform(20, 40), 2),
         "soil_moisture": round(random.uniform(10, 90), 2),
         "humidity": round(random.uniform(30, 90), 2),
-        "light": round(random.uniform(200, 1000), 2),
+        "light": round(random.uniform(200, 1000), 2)
     }
 
-# ---------------- Model Loader ----------------
-def load_model():
-    if os.path.exists(MODEL_PKL_PATH):
-        logging.info(f"✅ Loading XGBoost model (PKL): {MODEL_PKL_PATH}")
-        model = joblib.load(MODEL_PKL_PATH)
-        return model
-    elif os.path.exists(MODEL_JSON_PATH):
-        logging.info(f"✅ Loading XGBoost model (JSON): {MODEL_JSON_PATH}")
-        model = XGBClassifier()
-        model.load_model(MODEL_JSON_PATH)
-        return model
-    else:
-        raise FileNotFoundError("❌ No model found in models/ directory.")
-
-# ---------------- Feature Preparation ----------------
-def prepare_features(reading):
-    df = pd.DataFrame([reading])
-    df["temp_diff"] = df["air_temp"] - df["soil_temp"]
-    df["humidity_ratio"] = df["humidity"] / (df["soil_moisture"] + 1)
-
-    # Reorder columns exactly as in training
-    cols = ["soil_temp", "air_temp", "soil_moisture", "humidity", "light", "temp_diff", "humidity_ratio"]
-    return df[cols]
-
-# ---------------- Prediction ----------------
-def predict_irrigation(model, reading):
-    df = prepare_features(reading)
-    pred = model.predict(df)
-    return int(pred[0])
-
-# ---------------- Append Sensor Data ----------------
-def append_reading(row_dict, label=''):
-    os.makedirs(os.path.dirname(DATA_LOG_PATH), exist_ok=True)
-    df = pd.DataFrame([{
-        "timestamp": row_dict.get('timestamp', datetime.now(timezone.utc).isoformat()),
-        "soil_temp": row_dict["soil_temp"],
-        "air_temp": row_dict["air_temp"],
-        "soil_moisture": row_dict["soil_moisture"],
-        "humidity": row_dict["humidity"],
-        "light": row_dict["light"],
-        "irrigation_needed": label
-    }])
-    header = not os.path.exists(DATA_LOG_PATH)
-    df.to_csv(DATA_LOG_PATH, mode='a', header=header, index=False)
-
-# ---------------- Main Loop ----------------
-def main_loop():
+# =============== UPLOAD / BACKUP HANDLING ===============
+def upload_to_supabase(data):
+    """Upload to Supabase or store locally if offline."""
     try:
-        model = load_model()
+        if not supabase:
+            raise ConnectionError("Supabase client not initialized")
+
+        response = supabase.table("sensor_readings").insert(data).execute()
+        if response.data:
+            logging.info("📤 Data uploaded to Supabase successfully.")
+            return True
+        else:
+            raise Exception("Supabase returned no data")
     except Exception as e:
-        logging.error(f"Failed to load model: {e}")
-        return
+        logging.warning(f"⚠️ Upload failed ({e}). Saving offline...")
+        pd.DataFrame([data]).to_csv(OFFLINE_BACKUP, mode="a", header=not os.path.exists(OFFLINE_BACKUP), index=False)
+        return False
 
-    logging.info("Starting main loop")
+
+# =============== DECISION ENGINE ===============
+def decide_irrigation(sensor_data):
+    """Use trained ML model to decide irrigation need."""
+    if not model:
+        return "MODEL_NOT_AVAILABLE"
+
+    features = [
+        sensor_data["soil_temp"],
+        sensor_data["air_temp"],
+        sensor_data["soil_moisture"],
+        sensor_data["humidity"],
+        sensor_data["light"],
+        sensor_data["air_temp"] - sensor_data["soil_temp"],
+        sensor_data["humidity"] / (sensor_data["soil_moisture"] + 1)
+    ]
+
+    prediction = model.predict([features])[0]
+    return "IRRIGATION" if prediction == 1 else "NO_IRRIGATION"
+
+
+# =============== MAIN LOOP ===============
+def main_loop():
+    logging.info("🌱 Starting Smart Irrigation System (Supabase Integrated)...")
+
     while True:
-        try:
-            reading = read_sensors()
-            logging.info(f"Read sensors: {reading}")
+        sensor_data = read_sensor_data()
+        decision = decide_irrigation(sensor_data)
 
-            irrigation_needed = predict_irrigation(model, reading)
-            if irrigation_needed == 1:
-                logging.info(f"[{datetime.now().isoformat()}] 💧 Irrigation Needed! Soil moisture={reading['soil_moisture']}")
-            else:
-                logging.info(f"[{datetime.now().isoformat()}] INFO: No irrigation needed. Soil moisture={reading['soil_moisture']}")
+        msg = f"💧 {decision.replace('_', ' ')} | Soil Moisture={sensor_data['soil_moisture']}"
+        logging.info(f"[{sensor_data['timestamp']}] {msg}")
 
-            # Optional user feedback for supervised logging
-            user_input = input("Confirm irrigation needed? (y=needed / n=not / Enter=skip): ").strip().lower()
-            if user_input in ["y", "n"]:
-                label = 1 if user_input == "y" else 0
-                append_reading(reading, label)
+        record = {
+            **sensor_data,
+            "decision": decision,
+        }
 
-            time.sleep(5)  # adjust interval as needed
+        upload_to_supabase(record)
+        time.sleep(UPLOAD_INTERVAL)
 
-        except KeyboardInterrupt:
-            logging.info("🛑 Stopped by user.")
-            break
-        except Exception as e:
-            logging.error(f"Unexpected error in main loop: {e}")
 
-# ---------------- Entry Point ----------------
+# =============== ENTRY POINT ===============
 if __name__ == "__main__":
-    main_loop()
+    try:
+        main_loop()
+    except KeyboardInterrupt:
+        logging.info("🛑 Stopped by user.")
